@@ -1,50 +1,28 @@
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
-import { User } from '../models';
-import { config } from '../config/app';
+import { AuthService } from '../services/authService';
+import { sendSuccess, sendError, sendCreated } from '../utils/responseUtils';
+import { logAuth, logError } from '../utils/loggerUtils';
 
 export class AuthController {
   static async register(req: Request, res: Response): Promise<void> {
     try {
       const { full_name, email, phone_number, password } = req.body;
-
-      // Check if user already exists
-      const existingEmail = await User.findOne({ where: { email } });
-      if (existingEmail) {
-        res.status(400).json({ error: 'Email already registered' });
-        return;
-      }
-
-      const existingPhone = await User.findOne({ where: { phone_number } });
-      if (existingPhone) {
-        res.status(400).json({ error: 'Phone number already registered' });
-        return;
-      }
-
-      // Create new user
-      const user = await User.create({
+      
+      const result = await AuthService.registerUser({
         full_name,
         email,
         phone_number,
-        password_hash: password,
-        role: 'passenger',
+        password,
       });
 
-      // Generate JWT token
-      const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
-        config.jwt.secret,
-        { expiresIn: config.jwt.expiresIn } as jwt.SignOptions
-      );
+      logAuth('User registered', result.user.id, true);
 
-      res.status(201).json({
-        message: 'Registration successful',
-        user: user.toJSON(),
-        token,
-      });
+      sendCreated(res, result, 'Registration successful');
     } catch (error: any) {
-      console.error('Registration error:', error);
-      res.status(500).json({ error: 'Registration failed' });
+      logError('Registration error', error, { context: 'AuthController.register' });
+      
+      const statusCode = error.message.includes('already') ? 400 : 500;
+      sendError(res, error.message || 'Registration failed', statusCode);
     }
   }
 
@@ -52,35 +30,16 @@ export class AuthController {
     try {
       const { email, password } = req.body;
 
-      // Find user by email
-      const user = await User.findOne({ where: { email } });
-      if (!user) {
-        res.status(401).json({ error: 'Invalid email or password' });
-        return;
-      }
+      const result = await AuthService.loginUser(email, password);
 
-      // Verify password
-      const isValidPassword = await user.validatePassword(password);
-      if (!isValidPassword) {
-        res.status(401).json({ error: 'Invalid email or password' });
-        return;
-      }
+      logAuth('User logged in', result.user.id, true);
 
-      // Generate JWT token
-      const token = jwt.sign(
-        { id: user.id, email: user.email, role: user.role },
-        config.jwt.secret,
-        { expiresIn: config.jwt.expiresIn } as jwt.SignOptions
-      );
-
-      res.json({
-        message: 'Login successful',
-        user: user.toJSON(),
-        token,
-      });
+      sendSuccess(res, result, 'Login successful');
     } catch (error: any) {
-      console.error('Login error:', error);
-      res.status(500).json({ error: 'Login failed' });
+      logError('Login error', error, { context: 'AuthController.login' });
+      
+      const statusCode = error.message.includes('Invalid') ? 401 : 500;
+      sendError(res, error.message || 'Login failed', statusCode);
     }
   }
 
@@ -88,16 +47,17 @@ export class AuthController {
     try {
       const userId = (req as any).user.id;
       
-      const user = await User.findByPk(userId);
-      if (!user) {
-        res.status(404).json({ error: 'User not found' });
-        return;
-      }
+      const user = await AuthService.getUserProfile(userId);
 
-      res.json({ user: user.toJSON() });
+      sendSuccess(res, { user });
     } catch (error: any) {
-      console.error('Get profile error:', error);
-      res.status(500).json({ error: 'Failed to fetch profile' });
+      logError('Get profile error', error, { 
+        context: 'AuthController.getProfile',
+        userId: (req as any).user?.id 
+      });
+      
+      const statusCode = error.message === 'User not found' ? 404 : 500;
+      sendError(res, error.message || 'Failed to fetch profile', statusCode);
     }
   }
 
@@ -106,25 +66,23 @@ export class AuthController {
       const userId = (req as any).user.id;
       const { full_name, email, phone_number } = req.body;
 
-      const user = await User.findByPk(userId);
-      if (!user) {
-        res.status(404).json({ error: 'User not found' });
-        return;
-      }
-
-      await user.update({
+      const user = await AuthService.updateUserProfile(userId, {
         full_name,
         email,
         phone_number,
       });
 
-      res.json({
-        message: 'Profile updated successfully',
-        user: user.toJSON(),
-      });
+      logAuth('Profile updated', userId, true);
+
+      sendSuccess(res, { user }, 'Profile updated successfully');
     } catch (error: any) {
-      console.error('Update profile error:', error);
-      res.status(500).json({ error: 'Failed to update profile' });
+      logError('Update profile error', error, { 
+        context: 'AuthController.updateProfile',
+        userId: (req as any).user?.id 
+      });
+      
+      const statusCode = error.message === 'User not found' ? 404 : 500;
+      sendError(res, error.message || 'Failed to update profile', statusCode);
     }
   }
 }
