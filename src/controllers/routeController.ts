@@ -1,12 +1,10 @@
 import { Request, Response } from 'express';
-import { Route } from '../models';
+import { RouteService } from '../services/routeService';
 
 export class RouteController {
   static async getAllRoutes(_req: Request, res: Response): Promise<void> {
     try {
-      const routes = await Route.findAll({
-        order: [['departure_city', 'ASC'], ['arrival_city', 'ASC']],
-      });
+      const routes = await RouteService.getAllRoutes();
       res.json({ routes });
     } catch (error: any) {
       console.error('Get routes error:', error);
@@ -17,27 +15,22 @@ export class RouteController {
   static async getRouteById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const route = await Route.findByPk(id);
-
-      if (!route) {
-        res.status(404).json({ error: 'Route not found' });
-        return;
-      }
-
+      const route = await RouteService.getRouteById(parseInt(id));
       res.json({ route });
     } catch (error: any) {
       console.error('Get route error:', error);
+      if (error.message.includes('not found')) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
       res.status(500).json({ error: 'Failed to fetch route' });
     }
   }
 
-  static async getRoutesByDeparture(req: Request, res: Response) {
+  static async getRoutesByDeparture(req: Request, res: Response): Promise<void> {
     try {
       const { departure } = req.params;
-      const routes = await Route.findAll({
-        where: { departure_city: departure },
-        order: [['arrival_city', 'ASC']],
-      });
+      const routes = await RouteService.getRoutesByDeparture(departure);
       res.json({ routes });
     } catch (error: any) {
       console.error('Get routes by departure error:', error);
@@ -49,7 +42,7 @@ export class RouteController {
     try {
       const { departure_city, arrival_city, distance_km, estimated_duration_minutes } = req.body;
 
-      const route = await Route.create({
+      const route = await RouteService.createRoute({
         departure_city,
         arrival_city,
         distance_km,
@@ -75,13 +68,7 @@ export class RouteController {
       const { id } = req.params;
       const { departure_city, arrival_city, distance_km, estimated_duration_minutes } = req.body;
 
-      const route = await Route.findByPk(id);
-      if (!route) {
-        res.status(404).json({ error: 'Route not found' });
-        return;
-      }
-
-      await route.update({
+      const route = await RouteService.updateRoute(parseInt(id), {
         departure_city,
         arrival_city,
         distance_km,
@@ -94,6 +81,10 @@ export class RouteController {
       });
     } catch (error: any) {
       console.error('Update route error:', error);
+      if (error.message.includes('not found')) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
       res.status(500).json({ error: 'Failed to update route' });
     }
   }
@@ -101,17 +92,14 @@ export class RouteController {
   static async deleteRoute(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const route = await Route.findByPk(id);
-
-      if (!route) {
-        res.status(404).json({ error: 'Route not found' });
-        return;
-      }
-
-      await route.destroy();
-      res.json({ message: 'Route deleted successfully' });
+      const result = await RouteService.deleteRoute(parseInt(id));
+      res.json(result);
     } catch (error: any) {
       console.error('Delete route error:', error);
+      if (error.message.includes('not found')) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
       res.status(500).json({ error: 'Failed to delete route' });
     }
   }
