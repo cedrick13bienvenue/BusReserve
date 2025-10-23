@@ -1,35 +1,10 @@
 import { Request, Response } from 'express';
-import { BusSchedule, Bus, Route, BusCompany, Booking } from '../models';
+import { ScheduleService } from '../services/scheduleService';
 
 export class ScheduleController {
   static async getAllSchedules(_req: Request, res: Response): Promise<void> {
     try {
-      const schedules = await BusSchedule.findAll({
-        where: { is_active: true },
-        include: [
-          {
-            model: Bus,
-            as: 'bus',
-            attributes: ['plate_number', 'bus_type', 'total_seats'],
-            include: [
-              {
-                model: BusCompany,
-                as: 'company',
-                attributes: ['name'],
-              },
-            ],
-          },
-          {
-            model: Route,
-            as: 'route',
-            attributes: ['departure_city', 'arrival_city', 'distance_km', 'estimated_duration_minutes'],
-          },
-        ],
-        order: [
-          [{ model: Route, as: 'route' }, 'departure_city', 'ASC'],
-          ['departure_time', 'ASC'],
-        ],
-      });
+      const schedules = await ScheduleService.getAllSchedules();
       res.json({ schedules });
     } catch (error: any) {
       console.error('Get schedules error:', error);
@@ -40,66 +15,22 @@ export class ScheduleController {
   static async getScheduleById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const schedule = await BusSchedule.findByPk(id, {
-        include: [
-          {
-            model: Bus,
-            as: 'bus',
-            attributes: ['plate_number', 'bus_type', 'total_seats'],
-            include: [
-              {
-                model: BusCompany,
-                as: 'company',
-                attributes: ['name'],
-              },
-            ],
-          },
-          {
-            model: Route,
-            as: 'route',
-            attributes: ['departure_city', 'arrival_city', 'distance_km', 'estimated_duration_minutes'],
-          },
-        ],
-      });
-
-      if (!schedule) {
-        res.status(404).json({ error: 'Schedule not found' });
-        return;
-      }
-
+      const schedule = await ScheduleService.getScheduleById(parseInt(id));
       res.json({ schedule });
     } catch (error: any) {
       console.error('Get schedule error:', error);
+      if (error.message.includes('not found')) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
       res.status(500).json({ error: 'Failed to fetch schedule' });
     }
   }
 
-  static async getSchedulesByRoute(req: Request, res: Response) {
+  static async getSchedulesByRoute(req: Request, res: Response): Promise<void> {
     try {
       const { routeId } = req.params;
-      const schedules = await BusSchedule.findAll({
-        where: { route_id: routeId, is_active: true },
-        include: [
-          {
-            model: Bus,
-            as: 'bus',
-            attributes: ['plate_number', 'bus_type', 'total_seats'],
-            include: [
-              {
-                model: BusCompany,
-                as: 'company',
-                attributes: ['name'],
-              },
-            ],
-          },
-          {
-            model: Route,
-            as: 'route',
-            attributes: ['departure_city', 'arrival_city', 'distance_km', 'estimated_duration_minutes'],
-          },
-        ],
-        order: [['departure_time', 'ASC']],
-      });
+      const schedules = await ScheduleService.getSchedulesByRoute(parseInt(routeId));
       res.json({ schedules });
     } catch (error: any) {
       console.error('Get schedules by route error:', error);
@@ -117,48 +48,23 @@ export class ScheduleController {
         return;
       }
 
-      const schedule = await BusSchedule.findByPk(scheduleId, {
-        include: [
-          {
-            model: Bus,
-            as: 'bus',
-            attributes: ['total_seats'],
-          },
-        ],
-      });
+      const result = await ScheduleService.getAvailableSeats(
+        parseInt(scheduleId),
+        travel_date as string
+      );
 
-      if (!schedule) {
-        res.status(404).json({ error: 'Schedule not found' });
-        return;
-      }
-
-      const bookedSeats = await Booking.findAll({
-        where: {
-          schedule_id: scheduleId,
-          travel_date: travel_date as string,
-          status: 'confirmed',
-        },
-        attributes: ['seat_number'],
-      });
-
-      const booked = bookedSeats.map((b) => b.seat_number);
-      const totalSeats = (schedule as any).bus.total_seats;
-      const allSeats = Array.from({ length: totalSeats }, (_, i) => i + 1);
-      const availableSeats = allSeats.filter((seat) => !booked.includes(seat));
-
-      res.json({
-        schedule_id: scheduleId,
-        travel_date,
-        available_seats: availableSeats,
-        total_available: availableSeats.length,
-      });
+      res.json(result);
     } catch (error: any) {
       console.error('Get available seats error:', error);
+      if (error.message.includes('not found')) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
       res.status(500).json({ error: 'Failed to fetch available seats' });
     }
   }
 
-  static async createSchedule(req: Request, res: Response) {
+  static async createSchedule(req: Request, res: Response): Promise<void> {
     try {
       const {
         bus_id,
@@ -170,7 +76,7 @@ export class ScheduleController {
         is_active,
       } = req.body;
 
-      const schedule = await BusSchedule.create({
+      const schedule = await ScheduleService.createSchedule({
         bus_id,
         route_id,
         departure_time,
@@ -195,13 +101,7 @@ export class ScheduleController {
       const { id } = req.params;
       const { departure_time, arrival_time, price, is_active } = req.body;
 
-      const schedule = await BusSchedule.findByPk(id);
-      if (!schedule) {
-        res.status(404).json({ error: 'Schedule not found' });
-        return;
-      }
-
-      await schedule.update({
+      const schedule = await ScheduleService.updateSchedule(parseInt(id), {
         departure_time,
         arrival_time,
         price,
@@ -214,6 +114,10 @@ export class ScheduleController {
       });
     } catch (error: any) {
       console.error('Update schedule error:', error);
+      if (error.message.includes('not found')) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
       res.status(500).json({ error: 'Failed to update schedule' });
     }
   }
@@ -221,17 +125,14 @@ export class ScheduleController {
   static async deleteSchedule(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const schedule = await BusSchedule.findByPk(id);
-
-      if (!schedule) {
-        res.status(404).json({ error: 'Schedule not found' });
-        return;
-      }
-
-      await schedule.destroy();
-      res.json({ message: 'Schedule deleted successfully' });
+      const result = await ScheduleService.deleteSchedule(parseInt(id));
+      res.json(result);
     } catch (error: any) {
       console.error('Delete schedule error:', error);
+      if (error.message.includes('not found')) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
       res.status(500).json({ error: 'Failed to delete schedule' });
     }
   }
