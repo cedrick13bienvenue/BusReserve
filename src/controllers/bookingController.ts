@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Booking, BusSchedule, User, Bus, BusCompany, Route } from '../models';
+import { BookingService } from '../services/bookingService';
 
 export class BookingController {
   static async createBooking(req: Request, res: Response): Promise<void> {
@@ -7,127 +7,34 @@ export class BookingController {
       const userId = (req as any).user.id;
       const { schedule_id, travel_date, seat_number } = req.body;
 
-      // Validate schedule exists
-      const schedule = await BusSchedule.findByPk(schedule_id, {
-        include: [
-          {
-            model: Bus,
-            as: 'bus',
-            attributes: ['total_seats'],
-          },
-        ],
-      });
-
-      if (!schedule) {
-        res.status(404).json({ error: 'Schedule not found' });
-        return;
-      }
-
-      // Check if seat is available
-      const existingBooking = await Booking.findOne({
-        where: {
-          schedule_id,
-          travel_date,
-          seat_number,
-          status: 'confirmed',
-        },
-      });
-
-      if (existingBooking) {
-        res.status(400).json({ error: 'Seat is not available' });
-        return;
-      }
-
-      // Create booking
-      const booking = await Booking.create({
-        user_id: userId,
+      const booking = await BookingService.createBooking(userId, {
         schedule_id,
         travel_date,
         seat_number,
-        status: 'confirmed',
-      });
-
-      // Get full booking details
-      const bookingDetails = await Booking.findByPk(booking.id, {
-        include: [
-          {
-            model: User,
-            as: 'user',
-            attributes: ['full_name', 'email', 'phone_number'],
-          },
-          {
-            model: BusSchedule,
-            as: 'schedule',
-            include: [
-              {
-                model: Bus,
-                as: 'bus',
-                attributes: ['plate_number'],
-                include: [
-                  {
-                    model: BusCompany,
-                    as: 'company',
-                    attributes: ['name'],
-                  },
-                ],
-              },
-              {
-                model: Route,
-                as: 'route',
-                attributes: ['departure_city', 'arrival_city'],
-              },
-            ],
-          },
-        ],
       });
 
       res.status(201).json({
         message: 'Booking created successfully',
-        booking: bookingDetails,
+        booking,
       });
     } catch (error: any) {
       console.error('Create booking error:', error);
-      if (error.name === 'SequelizeUniqueConstraintError') {
-        res.status(400).json({ error: 'This seat is already booked' });
+      if (error.name === 'SequelizeUniqueConstraintError' || error.message.includes('not available')) {
+        res.status(400).json({ error: error.message || 'This seat is already booked' });
+        return;
+      }
+      if (error.message.includes('not found')) {
+        res.status(404).json({ error: error.message });
         return;
       }
       res.status(500).json({ error: 'Failed to create booking' });
     }
   }
 
-  static async getMyBookings(_req: Request, res: Response): Promise<void> {
+  static async getMyBookings(req: Request, res: Response): Promise<void> {
     try {
-      const userId = (_req as any).user.id;
-      const bookings = await Booking.findAll({
-        where: { user_id: userId },
-        include: [
-          {
-            model: BusSchedule,
-            as: 'schedule',
-            include: [
-              {
-                model: Bus,
-                as: 'bus',
-                attributes: ['plate_number'],
-                include: [
-                  {
-                    model: BusCompany,
-                    as: 'company',
-                    attributes: ['name'],
-                  },
-                ],
-              },
-              {
-                model: Route,
-                as: 'route',
-                attributes: ['departure_city', 'arrival_city'],
-              },
-            ],
-          },
-        ],
-        order: [['travel_date', 'DESC'], ['created_at', 'DESC']],
-      });
-
+      const userId = (req as any).user.id;
+      const bookings = await BookingService.getUserBookings(userId);
       res.json({ bookings });
     } catch (error: any) {
       console.error('Get bookings error:', error);
@@ -138,87 +45,21 @@ export class BookingController {
   static async getBookingByCode(req: Request, res: Response): Promise<void> {
     try {
       const { code } = req.params;
-      const booking = await Booking.findOne({
-        where: { booking_code: code },
-        include: [
-          {
-            model: User,
-            as: 'user',
-            attributes: ['full_name', 'email', 'phone_number'],
-          },
-          {
-            model: BusSchedule,
-            as: 'schedule',
-            include: [
-              {
-                model: Bus,
-                as: 'bus',
-                attributes: ['plate_number'],
-                include: [
-                  {
-                    model: BusCompany,
-                    as: 'company',
-                    attributes: ['name'],
-                  },
-                ],
-              },
-              {
-                model: Route,
-                as: 'route',
-                attributes: ['departure_city', 'arrival_city'],
-              },
-            ],
-          },
-        ],
-      });
-
-      if (!booking) {
-        res.status(404).json({ error: 'Booking not found' });
-        return;
-      }
-
+      const booking = await BookingService.getBookingByCode(code);
       res.json({ booking });
     } catch (error: any) {
       console.error('Get booking error:', error);
+      if (error.message.includes('not found')) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
       res.status(500).json({ error: 'Failed to fetch booking' });
     }
   }
 
   static async getAllBookings(_req: Request, res: Response): Promise<void> {
     try {
-      const bookings = await Booking.findAll({
-        include: [
-          {
-            model: User,
-            as: 'user',
-            attributes: ['full_name', 'email', 'phone_number'],
-          },
-          {
-            model: BusSchedule,
-            as: 'schedule',
-            include: [
-              {
-                model: Bus,
-                as: 'bus',
-                attributes: ['plate_number'],
-                include: [
-                  {
-                    model: BusCompany,
-                    as: 'company',
-                    attributes: ['name'],
-                  },
-                ],
-              },
-              {
-                model: Route,
-                as: 'route',
-                attributes: ['departure_city', 'arrival_city'],
-              },
-            ],
-          },
-        ],
-        order: [['created_at', 'DESC']],
-      });
+      const bookings = await BookingService.getAllBookings();
       res.json({ bookings });
     } catch (error: any) {
       console.error('Get all bookings error:', error);
@@ -231,23 +72,14 @@ export class BookingController {
       const userId = (req as any).user.id;
       const { code } = req.params;
 
-      const booking = await Booking.findOne({
-        where: {
-          booking_code: code,
-          user_id: userId,
-          status: 'confirmed',
-        },
-      });
-
-      if (!booking) {
-        res.status(404).json({ error: 'Booking not found or already cancelled' });
-        return;
-      }
-
-      await booking.update({ status: 'cancelled' });
+      await BookingService.cancelBooking(userId, code);
       res.json({ message: 'Booking cancelled successfully' });
     } catch (error: any) {
       console.error('Cancel booking error:', error);
+      if (error.message.includes('not found')) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
       res.status(500).json({ error: 'Failed to cancel booking' });
     }
   }
@@ -262,13 +94,7 @@ export class BookingController {
         return;
       }
 
-      const booking = await Booking.findByPk(id);
-      if (!booking) {
-        res.status(404).json({ error: 'Booking not found' });
-        return;
-      }
-
-      await booking.update({ status });
+      const booking = await BookingService.updateBookingStatus(parseInt(id), status);
 
       res.json({
         message: 'Booking status updated successfully',
@@ -276,6 +102,10 @@ export class BookingController {
       });
     } catch (error: any) {
       console.error('Update booking status error:', error);
+      if (error.message.includes('not found')) {
+        res.status(404).json({ error: error.message });
+        return;
+      }
       res.status(500).json({ error: 'Failed to update booking status' });
     }
   }
