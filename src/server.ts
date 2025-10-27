@@ -10,11 +10,11 @@ const startServer = async () => {
     // Test database connection
     await testConnection();
     
-    // Sync models (only in development)
-    if (config.nodeEnv === 'development') {
-      await sequelize.sync({ alter: false });
-      console.log('📊 Database models synchronized');
-    }
+    // Remove or comment out sequelize.sync()
+    // if (config.nodeEnv === 'development') {
+    //   await sequelize.sync({ alter: false });
+    //   console.log('📊 Database models synchronized');
+    // }
 
     // Start server
     app.listen(PORT, () => {
@@ -22,6 +22,7 @@ const startServer = async () => {
       console.log(`📍 Environment: ${config.nodeEnv}`);
       console.log(`🌐 API URL: ${config.app.url}`);
       console.log(`💡 Health check: ${config.app.url}/health`);
+      console.log(`📚 API Docs: ${config.app.url}/api-docs`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
