@@ -174,7 +174,7 @@ export const isOperationalError = (error: any): boolean => {
 /**
  * Log error details
  */
-export const logError = (error: any, context?: string): void => {
+export const logErrorDetails = (error: any, context?: string): void => {
   const timestamp = new Date().toISOString();
   const logMessage = [
     `[${timestamp}]`,
