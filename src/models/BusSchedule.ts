@@ -65,7 +65,7 @@ BusSchedule.init(
       allowNull: false,
     },
     available_days: {
-      type: DataTypes.STRING(50),
+      type: DataTypes.STRING(100),
       defaultValue: 'Monday,Tuesday,Wednesday,Thursday,Friday,Saturday,Sunday',
     },
     is_active: {
