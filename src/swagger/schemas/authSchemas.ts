@@ -99,21 +99,35 @@ export const authSchemas = {
     },
   },
   AuthResponse: {
-    type: 'object',
-    properties: {
-      message: {
-        type: 'string',
-        example: 'Registration successful',
-      },
-      user: {
-        $ref: '#/components/schemas/User',
-      },
-      token: {
-        type: 'string',
-        example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-      },
+  type: 'object',
+  properties: {
+    message: {
+      type: 'string',
+      example: 'Login successful', // Change from "Registration successful"
+    },
+    user: {
+      $ref: '#/components/schemas/User',
+    },
+    token: {
+      type: 'string',
+      example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
     },
   },
+},
+// Add new schema for registration
+RegisterResponse: {
+  type: 'object',
+  properties: {
+    message: {
+      type: 'string',
+      example: 'Registration successful. Please login to continue.',
+    },
+    user: {
+      $ref: '#/components/schemas/User',
+    },
+    // NO TOKEN HERE
+  },
+},
   Error: {
     type: 'object',
     properties: {
