@@ -5,26 +5,27 @@ import { logAuth, logError } from '../utils/loggerUtils';
 
 export class AuthController {
   static async register(req: Request, res: Response): Promise<void> {
-    try {
-      const { full_name, email, phone_number, password } = req.body;
-      
-      const result = await AuthService.registerUser({
-        full_name,
-        email,
-        phone_number,
-        password,
-      });
+  try {
+    const { full_name, email, phone_number, password } = req.body;
+    
+    const result = await AuthService.registerUser({
+      full_name,
+      email,
+      phone_number,
+      password,
+    });
 
-      logAuth('User registered', result.user.id, true);
+    logAuth('User registered', result.user.id, true);
 
-      sendCreated(res, result, 'Registration successful');
-    } catch (error: any) {
-      logError('Registration error', error, { context: 'AuthController.register' });
-      
-      const statusCode = error.message.includes('already') ? 400 : 500;
-      sendError(res, error.message || 'Registration failed', statusCode);
-    }
+    // ✅ Return 201 with success message, NO TOKEN
+    sendCreated(res, result, 'Registration successful. Please login to continue.');
+  } catch (error: any) {
+    logError('Registration error', error, { context: 'AuthController.register' });
+    
+    const statusCode = error.message.includes('already') ? 400 : 500;
+    sendError(res, error.message || 'Registration failed', statusCode);
   }
+}
 
   static async login(req: Request, res: Response): Promise<void> {
     try {
