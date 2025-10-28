@@ -30,11 +30,7 @@ export class AuthService {
       password_hash: password,
       role: 'passenger',
     });
-
-    // Generate JWT token
-    const token = this.generateToken(user);
-
-    return { user: user.toJSON(), token };
+    return { user: user.toJSON()};
   }
 
   static async loginUser(email: string, password: string) {
