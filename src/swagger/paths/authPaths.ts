@@ -14,17 +14,17 @@ export const authPaths = {
           },
         },
       },
-      responses: {
-        201: {
-          description: 'User registered successfully',
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/AuthResponse',
-              },
+responses: {
+      201: {
+        description: 'User registered successfully',
+        content: {
+          'application/json': {
+            schema: {
+              $ref: '#/components/schemas/RegisterResponse', 
             },
           },
         },
+      },
         400: {
           description: 'Bad request - Email or phone already registered',
           content: {
