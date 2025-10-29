@@ -1,9 +1,10 @@
-import User from './User';
+ import User from './User';
 import BusCompany from './BusCompany';
 import Bus from './Bus';
 import Route from './Route';
 import BusSchedule from './BusSchedule';
 import Booking from './Booking';
+import TokenBlacklist from './TokenBlacklist';
 
 // Define associations
 
@@ -57,6 +58,16 @@ Booking.belongsTo(BusSchedule, {
   as: 'schedule',
 });
 
+// User -> TokenBlacklist (One-to-Many)
+User.hasMany(TokenBlacklist, {
+  foreignKey: 'user_id',
+  as: 'blacklisted_tokens',
+});
+TokenBlacklist.belongsTo(User, {
+  foreignKey: 'user_id',
+  as: 'user',
+});
+
 export {
   User,
   BusCompany,
@@ -64,6 +75,7 @@ export {
   Route,
   BusSchedule,
   Booking,
+  TokenBlacklist,
 };
 
 export default {
@@ -73,4 +85,5 @@ export default {
   Route,
   BusSchedule,
   Booking,
+  TokenBlacklist,
 };
