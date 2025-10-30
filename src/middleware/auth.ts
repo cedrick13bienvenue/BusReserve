@@ -1,16 +1,28 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import TokenBlacklist from '../models/TokenBlacklist';
 
 export interface AuthRequest extends Request {
   user?: { id: number; email: string; role: string };
 }
 
-export const authenticate = (req: AuthRequest, res: Response, next: NextFunction): void => {
+export const authenticate = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
 
     if (!token) {
       res.status(401).json({ error: 'No token provided' });
+      return;
+    }
+
+    // Check if token is blacklisted
+    const isBlacklisted = await TokenBlacklist.isBlacklisted(token);
+    if (isBlacklisted) {
+      res.status(401).json({ error: 'Token has been invalidated' });
       return;
     }
 
@@ -22,7 +34,11 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
   }
 };
 
-export const authorizeAdmin = (req: AuthRequest, res: Response, next: NextFunction): void => {
+export const authorizeAdmin = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): void => {
   try {
     if (!req.user || req.user.role !== 'admin') {
       res.status(403).json({ error: 'Admin access required' });
