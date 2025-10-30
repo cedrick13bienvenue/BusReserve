@@ -14,17 +14,17 @@ export const authPaths = {
           },
         },
       },
-responses: {
-      201: {
-        description: 'User registered successfully',
-        content: {
-          'application/json': {
-            schema: {
-              $ref: '#/components/schemas/RegisterResponse', 
+      responses: {
+        201: {
+          description: 'User registered successfully',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/RegisterResponse',
+              },
             },
           },
         },
-      },
         400: {
           description: 'Bad request - Email or phone already registered',
           content: {
@@ -96,6 +96,50 @@ responses: {
         },
         422: {
           description: 'Validation error',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/Error',
+              },
+            },
+          },
+        },
+        500: {
+          description: 'Server error',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/Error',
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  '/api/auth/logout': {
+    post: {
+      tags: ['Authentication'],
+      summary: 'Logout user',
+      description: 'Invalidate the current JWT token by adding it to blacklist',
+      security: [
+        {
+          bearerAuth: [],
+        },
+      ],
+      responses: {
+        200: {
+          description: 'Logged out successfully',
+          content: {
+            'application/json': {
+              schema: {
+                $ref: '#/components/schemas/LogoutResponse',
+              },
+            },
+          },
+        },
+        401: {
+          description: 'Unauthorized - Invalid or missing token',
           content: {
             'application/json': {
               schema: {
