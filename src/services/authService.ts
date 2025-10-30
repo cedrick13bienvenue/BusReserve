@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { User } from '../models';
+import { User, TokenBlacklist } from '../models';
 import { config } from '../config/app';
 
 export class AuthService {
@@ -30,7 +30,7 @@ export class AuthService {
       password_hash: password,
       role: 'passenger',
     });
-    return { user: user.toJSON()};
+    return { user: user.toJSON() };
   }
 
   static async loginUser(email: string, password: string) {
@@ -50,6 +50,21 @@ export class AuthService {
     const token = this.generateToken(user);
 
     return { user: user.toJSON(), token };
+  }
+
+  static async logoutUser(token: string, userId: number) {
+    // Decode token to get expiration
+    const decoded = jwt.decode(token) as any;
+    if (!decoded || !decoded.exp) {
+      throw new Error('Invalid token');
+    }
+
+    const expiresAt = new Date(decoded.exp * 1000);
+
+    // Add token to blacklist
+    await TokenBlacklist.addToken(token, userId, expiresAt);
+
+    return { message: 'Logged out successfully' };
   }
 
   static async getUserProfile(userId: number) {
