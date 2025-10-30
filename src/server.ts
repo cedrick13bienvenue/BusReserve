@@ -1,6 +1,7 @@
 import app from './app';
 import { config } from './config/app';
 import sequelize, { testConnection } from './config/database';
+import { CronService } from './services/cronService';
 
 const PORT = config.port;
 
@@ -9,12 +10,6 @@ const startServer = async () => {
   try {
     // Test database connection
     await testConnection();
-    
-    // Remove or comment out sequelize.sync()
-    // if (config.nodeEnv === 'development') {
-    //   await sequelize.sync({ alter: false });
-    //   console.log('📊 Database models synchronized');
-    // }
 
     // Start server
     app.listen(PORT, () => {
@@ -23,6 +18,11 @@ const startServer = async () => {
       console.log(`🌐 API URL: ${config.app.url}`);
       console.log(`💡 Health check: ${config.app.url}/health`);
       console.log(`📚 API Docs: ${config.app.url}/api-docs`);
+
+      // Start cron jobs
+      if (config.nodeEnv === 'production' || config.nodeEnv === 'development') {
+        CronService.startAllJobs();
+      }
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);
