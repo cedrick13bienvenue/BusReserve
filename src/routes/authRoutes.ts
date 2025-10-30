@@ -39,6 +39,7 @@ const updateProfileValidation = [
 // Routes
 router.post('/register', validate(registerValidation), AuthController.register);
 router.post('/login', validate(loginValidation), AuthController.login);
+router.post('/logout', authenticate, AuthController.logout);
 router.get('/profile', authenticate, AuthController.getProfile);
 router.put('/profile', authenticate, validate(updateProfileValidation), AuthController.updateProfile);
 
