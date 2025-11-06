@@ -25,13 +25,6 @@ class Booking extends Model<BookingAttributes, BookingCreationAttributes> implem
   public status!: 'confirmed' | 'cancelled' | 'completed';
   public readonly created_at!: Date;
   public readonly updated_at!: Date;
-
-  // Helper method to generate booking code
-  static generateBookingCode(): string {
-    const timestamp = Date.now().toString(36).toUpperCase();
-    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-    return `BK${timestamp}${random}`;
-  }
 }
 
 Booking.init(
@@ -89,13 +82,6 @@ Booking.init(
     tableName: 'bookings',
     underscored: true,
     timestamps: true,
-    hooks: {
-      beforeCreate: async (booking: Booking) => {
-        if (!booking.booking_code) {
-          booking.booking_code = Booking.generateBookingCode();
-        }
-      },
-    },
   }
 );
 
