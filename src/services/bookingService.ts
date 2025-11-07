@@ -59,10 +59,8 @@ export class BookingService {
       booking_code: tempBookingCode,
     });
 
-    // Generate final booking code using the booking ID
-    const paddedId = booking.id.toString().padStart(6, '0');
-    const timestamp = Date.now().toString(36).toUpperCase().slice(-4);
-    const finalBookingCode = `BK${timestamp}${paddedId}`;
+    // Generate enhanced booking code: BK{YYMMDD}{HHMM}{RANDOM}{ID}
+    const finalBookingCode = this.generateEnhancedBookingCode(booking.id);
 
     // Update with final booking code
     await booking.update({ booking_code: finalBookingCode });
@@ -115,6 +113,45 @@ export class BookingService {
     }
 
     return fullBooking;
+  }
+
+  /**
+   * Generate enhanced booking code with date, time, random component and ID
+   * Format: BK{YYMMDD}{HHMM}{RANDOM}{ID}
+   * Example: BK2511071435GF45000001 (22 chars)
+   * 
+   * Breakdown:
+   * - BK: Prefix (2 chars)
+   * - YYMMDD: Date (6 chars) - 251107 = Nov 7, 2025
+   * - HHMM: Time (4 chars) - 1435 = 2:35 PM
+   * - RANDOM: Security component (4 chars) - GF45
+   * - ID: Booking ID (6 chars) - 000001
+   */
+  private static generateEnhancedBookingCode(bookingId: number): string {
+    const now = new Date();
+    
+    // Date component: YYMMDD
+    const year = now.getFullYear().toString().slice(-2);
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    const day = now.getDate().toString().padStart(2, '0');
+    
+    // Time component: HHMM
+    const hour = now.getHours().toString().padStart(2, '0');
+    const minute = now.getMinutes().toString().padStart(2, '0');
+    
+    // Random security component: 4 alphanumeric characters
+    // Removed confusing characters (0, O, 1, I) for better readability
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let random = '';
+    for (let i = 0; i < 4; i++) {
+      random += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    // ID component: 6 digits
+    const paddedId = bookingId.toString().padStart(6, '0');
+    
+    // Format: BK{YYMMDD}{HHMM}{RANDOM}{ID}
+    return `BK${year}${month}${day}${hour}${minute}${random}${paddedId}`;
   }
 
   static async getUserBookings(userId: number) {
