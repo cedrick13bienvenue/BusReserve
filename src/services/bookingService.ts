@@ -1,5 +1,6 @@
 import { Booking, BusSchedule, User, Bus, BusCompany, Route } from '../models';
 import SocketServer from '../config/socket';
+import { EmailService, BookingEmailData, BookingCancellationEmailData } from './emailService';
 import { logInfo, logError, logSuccess } from '../utils/loggerUtils';
 
 export class BookingService {
@@ -15,13 +16,25 @@ export class BookingService {
 
     logInfo(`Creating booking for user ${userId}, schedule ${schedule_id}, seat ${seat_number}`);
 
-    // Validate schedule exists
+    // Validate schedule exists and get all details
     const schedule = await BusSchedule.findByPk(schedule_id, {
       include: [
         {
           model: Bus,
           as: 'bus',
-          attributes: ['total_seats'],
+          attributes: ['total_seats', 'plate_number'],
+          include: [
+            {
+              model: BusCompany,
+              as: 'company',
+              attributes: ['name'],
+            },
+          ],
+        },
+        {
+          model: Route,
+          as: 'route',
+          attributes: ['departure_city', 'arrival_city', 'distance_km', 'estimated_duration_minutes'],
         },
       ],
     });
@@ -30,6 +43,9 @@ export class BookingService {
       logError(`Schedule ${schedule_id} not found`);
       throw new Error('Schedule not found');
     }
+
+    // Cast schedule to any to access included relations
+    const scheduleData: any = schedule;
 
     // Check if seat is available
     const existingBooking = await Booking.findOne({
@@ -44,6 +60,12 @@ export class BookingService {
     if (existingBooking) {
       logError(`Seat ${seat_number} already booked for schedule ${schedule_id} on ${travel_date}`);
       throw new Error('Seat is not available');
+    }
+
+    // Get user details for email
+    const user = await User.findByPk(userId);
+    if (!user) {
+      throw new Error('User not found');
     }
 
     // Generate temporary booking code (short enough for DB)
@@ -70,6 +92,32 @@ export class BookingService {
     // Get full booking details
     const fullBooking = await this.getBookingById(booking.id);
 
+    // Send email notification
+    try {
+      const emailData: BookingEmailData = {
+        passengerName: user.full_name,
+        passengerEmail: user.email,
+        bookingCode: finalBookingCode,
+        travelDate: travel_date.toString(),
+        departureCity: scheduleData.route.departure_city,
+        arrivalCity: scheduleData.route.arrival_city,
+        departureTime: scheduleData.departure_time,
+        arrivalTime: scheduleData.arrival_time,
+        busCompany: scheduleData.bus.company.name,
+        plateNumber: scheduleData.bus.plate_number,
+        seatNumber: seat_number,
+        price: parseFloat(scheduleData.price),
+        distance: scheduleData.route.distance_km,
+        duration: scheduleData.route.estimated_duration_minutes,
+      };
+
+      await EmailService.sendBookingConfirmation(emailData);
+      logSuccess(`Booking confirmation email sent to ${user.email}`);
+    } catch (error) {
+      logError('Failed to send booking confirmation email', error);
+      // Don't fail the booking if email fails
+    }
+
     // Emit real-time events
     try {
       const socketServer = SocketServer.getInstance();
@@ -94,7 +142,7 @@ export class BookingService {
       );
 
       // Emit low seat warning if applicable
-      const totalSeats = (schedule as any).bus.total_seats;
+      const totalSeats = scheduleData.bus.total_seats;
       const remainingSeats = availableSeats.total_available;
       const occupancyRate = ((totalSeats - remainingSeats) / totalSeats) * 100;
 
@@ -280,6 +328,24 @@ export class BookingService {
         user_id: userId,
         status: 'confirmed',
       },
+      include: [
+        {
+          model: User,
+          as: 'user',
+          attributes: ['full_name', 'email'],
+        },
+        {
+          model: BusSchedule,
+          as: 'schedule',
+          include: [
+            {
+              model: Route,
+              as: 'route',
+              attributes: ['departure_city', 'arrival_city'],
+            },
+          ],
+        },
+      ],
     });
 
     if (!booking) {
@@ -290,6 +356,24 @@ export class BookingService {
     await booking.update({ status: 'cancelled' });
 
     logSuccess(`Booking cancelled: ${code}`);
+
+    // Send cancellation email
+    try {
+      const bookingData: any = booking;
+      const emailData: BookingCancellationEmailData = {
+        passengerName: bookingData.user.full_name,
+        passengerEmail: bookingData.user.email,
+        bookingCode: code,
+        travelDate: booking.travel_date.toString(),
+        departureCity: bookingData.schedule.route.departure_city,
+        arrivalCity: bookingData.schedule.route.arrival_city,
+      };
+
+      await EmailService.sendBookingCancellation(emailData);
+      logSuccess(`Cancellation email sent to ${bookingData.user.email}`);
+    } catch (error) {
+      logError('Failed to send cancellation email', error);
+    }
 
     // Emit real-time events
     try {
