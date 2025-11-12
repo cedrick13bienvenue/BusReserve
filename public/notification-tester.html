@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bus Booking - Real-Time Notifications Tester</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .header {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      }
+
+      .header h1 {
+        color: #333;
+        margin-bottom: 10px;
+        font-size: 28px;
+      }
+
+      .header p {
+        color: #666;
+        font-size: 14px;
+      }
+
+      .status-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 2px solid #f0f0f0;
+      }
+
+      .connection-status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .status-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        animation: pulse 2s infinite;
+      }
+
+      .status-dot.connected {
+        background: #10b981;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+      }
+
+      .status-dot.disconnected {
+        background: #ef4444;
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      .status-text {
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .stats {
+        display: flex;
+        gap: 20px;
+      }
+
+      .stat-item {
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #667eea;
+      }
+
+      .stat-label {
+        font-size: 11px;
+        color: #999;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .main-grid {
+        display: grid;
+        grid-template-columns: 400px 1fr;
+        gap: 20px;
+      }
+
+      .card {
+        background: white;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      }
+
+      .card h2 {
+        color: #333;
+        margin-bottom: 20px;
+        font-size: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #555;
+        font-weight: 600;
+        font-size: 13px;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e5e7eb;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.3s;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .btn {
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .btn-primary {
+        background: #667eea;
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: #5568d3;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-danger {
+        background: #ef4444;
+        color: white;
+        margin-top: 10px;
+      }
+
+      .btn-danger:hover {
+        background: #dc2626;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(239, 68, 68, 0.4);
+      }
+
+      .room-section {
+        background: #f9fafb;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 20px;
+      }
+
+      .room-section h3 {
+        color: #667eea;
+        margin-bottom: 15px;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .room-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .btn-small {
+        padding: 10px;
+        font-size: 12px;
+      }
+
+      .btn-success {
+        background: #10b981;
+        color: white;
+      }
+
+      .btn-success:hover {
+        background: #059669;
+      }
+
+      .btn-secondary {
+        background: #6b7280;
+        color: white;
+      }
+
+      .btn-secondary:hover {
+        background: #4b5563;
+      }
+
+      .notifications-panel {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+      }
+
+      .notifications-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+
+      .clear-btn {
+        padding: 8px 16px;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all 0.3s;
+      }
+
+      .clear-btn:hover {
+        background: #dc2626;
+        transform: translateY(-1px);
+      }
+
+      .notification {
+        background: #f9fafb;
+        border-left: 4px solid #667eea;
+        padding: 15px;
+        margin-bottom: 12px;
+        border-radius: 8px;
+        animation: slideIn 0.3s ease-out;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .notification:hover {
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      @keyframes slideIn {
+        from {
+          opacity: 0;
+          transform: translateX(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .notification.priority-urgent {
+        border-left-color: #ef4444;
+        background: #fef2f2;
+      }
+
+      .notification.priority-high {
+        border-left-color: #f59e0b;
+        background: #fffbeb;
+      }
+
+      .notification.priority-medium {
+        border-left-color: #3b82f6;
+        background: #eff6ff;
+      }
+
+      .notification.priority-low {
+        border-left-color: #10b981;
+        background: #f0fdf4;
+      }
+
+      .notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+      }
+
+      .notification-title {
+        font-weight: 600;
+        color: #333;
+        font-size: 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .notification-time {
+        font-size: 11px;
+        color: #9ca3af;
+      }
+
+      .notification-message {
+        color: #555;
+        font-size: 13px;
+        line-height: 1.6;
+        margin-bottom: 10px;
+      }
+
+      .notification-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .notification-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .badge-booking {
+        background: #dbeafe;
+        color: #1e40af;
+      }
+
+      .badge-seat {
+        background: #fef3c7;
+        color: #92400e;
+      }
+
+      .badge-schedule {
+        background: #ddd6fe;
+        color: #5b21b6;
+      }
+
+      .badge-route {
+        background: #d1fae5;
+        color: #065f46;
+      }
+
+      .badge-system {
+        background: #e5e7eb;
+        color: #374151;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #9ca3af;
+      }
+
+      .empty-state-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+        opacity: 0.3;
+      }
+
+      .empty-state h3 {
+        color: #6b7280;
+        margin-bottom: 10px;
+        font-size: 18px;
+      }
+
+      .empty-state p {
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .instructions {
+        background: #fffbeb;
+        border-left: 4px solid #f59e0b;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 20px;
+      }
+
+      .instructions h3 {
+        color: #92400e;
+        margin-bottom: 10px;
+        font-size: 14px;
+      }
+
+      .instructions ol {
+        margin-left: 20px;
+        color: #78350f;
+        font-size: 13px;
+        line-height: 1.8;
+      }
+
+      .instructions code {
+        background: #fef3c7;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+      }
+
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb {
+        background: #667eea;
+        border-radius: 10px;
+      }
+
+      ::-webkit-scrollbar-thumb:hover {
+        background: #5568d3;
+      }
+
+      @media (max-width: 1024px) {
+        .main-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <h1>🚌 Real-Time Notification Tester</h1>
+        <p>
+          Test in-app notifications for booking updates, schedule changes, and
+          more
+        </p>
+
+        <div class="status-bar">
+          <div class="connection-status">
+            <div id="statusDot" class="status-dot disconnected"></div>
+            <span id="statusText" class="status-text">Disconnected</span>
+          </div>
+
+          <div class="stats">
+            <div class="stat-item">
+              <div class="stat-value" id="totalCount">0</div>
+              <div class="stat-label">Total</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="sessionCount">0</div>
+              <div class="stat-label">This Session</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="connectedTime">00:00</div>
+              <div class="stat-label">Connected</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="main-grid">
+        <!-- Control Panel -->
+        <div class="card">
+          <h2>🎛️ Control Panel</h2>
+
+          <div class="form-group">
+            <label for="jwtToken">JWT Token (from Postman)</label>
+            <input
+              type="text"
+              id="jwtToken"
+              placeholder="Paste your JWT token here..."
+            />
+          </div>
+
+          <button class="btn btn-primary" onclick="connectSocket()">
+            🔌 Connect to Server
+          </button>
+          <button class="btn btn-danger" onclick="disconnectSocket()">
+            ⚠️ Disconnect
+          </button>
+
+          <div class="room-section">
+            <h3>📍 Join Rooms (Optional)</h3>
+            <p style="font-size: 12px; color: #666; margin-bottom: 15px">
+              Subscribe to specific schedules or routes for targeted
+              notifications
+            </p>
+
+            <div class="form-group">
+              <label for="scheduleId">Schedule ID</label>
+              <input
+                type="number"
+                id="scheduleId"
+                placeholder="e.g., 1"
+                min="1"
+              />
+            </div>
+
+            <div class="room-buttons">
+              <button
+                class="btn btn-success btn-small"
+                onclick="joinSchedule()"
+              >
+                Join Schedule
+              </button>
+              <button
+                class="btn btn-secondary btn-small"
+                onclick="leaveSchedule()"
+              >
+                Leave Schedule
+              </button>
+            </div>
+
+            <div class="form-group" style="margin-top: 15px">
+              <label for="routeId">Route ID</label>
+              <input type="number" id="routeId" placeholder="e.g., 1" min="1" />
+            </div>
+
+            <div class="room-buttons">
+              <button class="btn btn-success btn-small" onclick="joinRoute()">
+                Join Route
+              </button>
+              <button
+                class="btn btn-secondary btn-small"
+                onclick="leaveRoute()"
+              >
+                Leave Route
+              </button>
+            </div>
+          </div>
+
+          <div class="instructions">
+            <h3>📝 How to Test</h3>
+            <ol>
+              <li>
+                Get your JWT token from Postman after login (<code
+                  >POST /api/auth/login</code
+                >)
+              </li>
+              <li>Paste the token above and click "Connect to Server"</li>
+              <li>
+                Make API requests in Postman (create booking, update schedule,
+                etc.)
+              </li>
+              <li>Watch notifications appear in real-time! 🎉</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Notifications Panel -->
+        <div class="card">
+          <div class="notifications-header">
+            <h2>📬 Live Notifications</h2>
+            <button class="clear-btn" onclick="clearNotifications()">
+              🗑️ Clear All
+            </button>
+          </div>
+
+          <div class="notifications-panel" id="notificationsContainer">
+            <div class="empty-state">
+              <div class="empty-state-icon">🔔</div>
+              <h3>No Notifications Yet</h3>
+              <p>
+                Connect to the server and perform actions in Postman.<br />
+                Notifications will appear here instantly!
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let socket = null;
+      let notifications = [];
+      let stats = {
+        total: 0,
+        session: 0,
+        startTime: null,
+        timer: null,
+      };
+
+      // Connect to Socket.IO server
+      function connectSocket() {
+        const token = document.getElementById("jwtToken").value.trim();
+
+        if (!token) {
+          alert("⚠️ Please enter your JWT token first!");
+          return;
+        }
+
+        // Disconnect existing connection
+        if (socket) {
+          socket.disconnect();
+        }
+
+        // Create new connection
+        socket = io("http://localhost:3000", {
+          auth: { token },
+          transports: ["websocket", "polling"],
+        });
+
+        // Connection events
+        socket.on("connect", () => {
+          updateConnectionStatus(true);
+          addSystemNotification(
+            "✅ Connected",
+            "Successfully connected to the server",
+            "low"
+          );
+          startTimer();
+        });
+
+        socket.on("disconnect", (reason) => {
+          updateConnectionStatus(false);
+          addSystemNotification(
+            "⚠️ Disconnected",
+            `Connection lost: ${reason}`,
+            "medium"
+          );
+          stopTimer();
+        });
+
+        socket.on("connect_error", (error) => {
+          updateConnectionStatus(false);
+          addSystemNotification(
+            "❌ Connection Error",
+            `Failed to connect: ${error.message}`,
+            "high"
+          );
+        });
+
+        // Listen for all notification types
+        socket.on("notification", handleNotification);
+        socket.on("booking:created", (data) =>
+          handleNotification({ ...data, type: "booking:created" })
+        );
+        socket.on("booking:cancelled", (data) =>
+          handleNotification({ ...data, type: "booking:cancelled" })
+        );
+        socket.on("booking:status:updated", (data) =>
+          handleNotification({ ...data, type: "booking:status:updated" })
+        );
+        socket.on("seats:updated", (data) =>
+          handleNotification({ ...data, type: "seat:updated" })
+        );
+        socket.on("seats:low", (data) =>
+          handleNotification({ ...data, type: "seat:low" })
+        );
+        socket.on("schedule:updated", (data) =>
+          handleNotification({ ...data, type: "schedule:updated" })
+        );
+        socket.on("route:updated", (data) =>
+          handleNotification({ ...data, type: "route:updated" })
+        );
+        socket.on("system:notification", (data) =>
+          handleNotification({ ...data, type: "system:notification" })
+        );
+
+        // Log all events for debugging
+        socket.onAny((eventName, ...args) => {
+          console.log(`📡 Event: ${eventName}`, args);
+        });
+      }
+
+      // Disconnect from server
+      function disconnectSocket() {
+        if (socket) {
+          socket.disconnect();
+          socket = null;
+          addSystemNotification(
+            "👋 Disconnected",
+            "Manually disconnected from server",
+            "low"
+          );
+        }
+      }
+
+      // Join schedule room
+      function joinSchedule() {
+        if (!socket || !socket.connected) {
+          alert("⚠️ Please connect to the server first!");
+          return;
+        }
+
+        const scheduleId = document.getElementById("scheduleId").value;
+        if (!scheduleId) {
+          alert("⚠️ Please enter a schedule ID!");
+          return;
+        }
+
+        socket.emit("join:schedule", parseInt(scheduleId));
+        addSystemNotification(
+          "📍 Joined Schedule",
+          `Now watching schedule ${scheduleId}`,
+          "low"
+        );
+      }
+
+      // Leave schedule room
+      function leaveSchedule() {
+        if (!socket || !socket.connected) return;
+
+        const scheduleId = document.getElementById("scheduleId").value;
+        if (!scheduleId) return;
+
+        socket.emit("leave:schedule", parseInt(scheduleId));
+        addSystemNotification(
+          "👋 Left Schedule",
+          `Stopped watching schedule ${scheduleId}`,
+          "low"
+        );
+      }
+
+      // Join route room
+      function joinRoute() {
+        if (!socket || !socket.connected) {
+          alert("⚠️ Please connect to the server first!");
+          return;
+        }
+
+        const routeId = document.getElementById("routeId").value;
+        if (!routeId) {
+          alert("⚠️ Please enter a route ID!");
+          return;
+        }
+
+        socket.emit("join:route", parseInt(routeId));
+        addSystemNotification(
+          "📍 Joined Route",
+          `Now watching route ${routeId}`,
+          "low"
+        );
+      }
+
+      // Leave route room
+      function leaveRoute() {
+        if (!socket || !socket.connected) return;
+
+        const routeId = document.getElementById("routeId").value;
+        if (!routeId) return;
+
+        socket.emit("leave:route", parseInt(routeId));
+        addSystemNotification(
+          "👋 Left Route",
+          `Stopped watching route ${routeId}`,
+          "low"
+        );
+      }
+
+      // Handle incoming notifications
+      function handleNotification(data) {
+        console.log("📬 Notification received:", data);
+
+        const notification = {
+          id: data.id || `notif_${Date.now()}`,
+          type: data.type || "general",
+          priority: data.priority || "medium",
+          title: data.title || "Notification",
+          message: data.message || JSON.stringify(data),
+          icon: data.icon || getIconForType(data.type),
+          timestamp: data.createdAt || new Date().toISOString(),
+          data: data.data || {},
+        };
+
+        addNotification(notification);
+        playNotificationSound();
+      }
+
+      // Add notification to list
+      function addNotification(notification) {
+        notifications.unshift(notification);
+        stats.total++;
+        stats.session++;
+        updateStats();
+        renderNotifications();
+      }
+
+      // Add system notification
+      function addSystemNotification(title, message, priority) {
+        const notification = {
+          id: `system_${Date.now()}`,
+          type: "system",
+          priority,
+          title,
+          message,
+          icon: "⚙️",
+          timestamp: new Date().toISOString(),
+        };
+        addNotification(notification);
+      }
+
+      // Render notifications
+      function renderNotifications() {
+        const container = document.getElementById("notificationsContainer");
+
+        if (notifications.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">🔔</div>
+              <h3>No Notifications Yet</h3>
+              <p>
+                Connect to the server and perform actions in Postman.<br/>
+                Notifications will appear here instantly!
+              </p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = notifications
+          .map((notif) => {
+            const badgeClass = getBadgeClass(notif.type);
+            const time = new Date(notif.timestamp).toLocaleTimeString();
+
+            return `
+            <div class="notification priority-${notif.priority}">
+              <div class="notification-header">
+                <div class="notification-title">${notif.icon} ${notif.title}</div>
+                <div class="notification-time">${time}</div>
+              </div>
+              <div class="notification-message">${notif.message}</div>
+              <div class="notification-footer">
+                <span class="notification-badge ${badgeClass}">${notif.type}</span>
+              </div>
+            </div>
+          `;
+          })
+          .join("");
+      }
+
+      // Clear all notifications
+      function clearNotifications() {
+        if (
+          notifications.length === 0 ||
+          confirm("🗑️ Clear all notifications?")
+        ) {
+          notifications = [];
+          stats.session = 0;
+          updateStats();
+          renderNotifications();
+        }
+      }
+
+      // Update connection status
+      function updateConnectionStatus(connected) {
+        const dot = document.getElementById("statusDot");
+        const text = document.getElementById("statusText");
+
+        if (connected) {
+          dot.className = "status-dot connected";
+          text.textContent = "Connected";
+          text.style.color = "#10b981";
+        } else {
+          dot.className = "status-dot disconnected";
+          text.textContent = "Disconnected";
+          text.style.color = "#ef4444";
+        }
+      }
+
+      // Update stats
+      function updateStats() {
+        document.getElementById("totalCount").textContent = stats.total;
+        document.getElementById("sessionCount").textContent = stats.session;
+      }
+
+      // Timer functions
+      function startTimer() {
+        stats.startTime = Date.now();
+        stats.timer = setInterval(() => {
+          if (stats.startTime) {
+            const elapsed = Date.now() - stats.startTime;
+            const minutes = Math.floor(elapsed / 60000);
+            const seconds = Math.floor((elapsed % 60000) / 1000);
+            document.getElementById("connectedTime").textContent = `${String(
+              minutes
+            ).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+          }
+        }, 1000);
+      }
+
+      function stopTimer() {
+        if (stats.timer) {
+          clearInterval(stats.timer);
+          stats.timer = null;
+          stats.startTime = null;
+        }
+      }
+
+      // Utility functions
+      function getIconForType(type) {
+        const icons = {
+          "booking:created": "🎉",
+          "booking:cancelled": "❌",
+          "booking:status:updated": "📝",
+          "seat:updated": "🪑",
+          "seat:low": "⚠️",
+          "schedule:updated": "📅",
+          "schedule:created": "🆕",
+          "route:updated": "🗺️",
+          "route:created": "🚀",
+          system: "⚙️",
+        };
+        return icons[type] || "📌";
+      }
+
+      function getBadgeClass(type) {
+        if (type.includes("booking")) return "badge-booking";
+        if (type.includes("seat")) return "badge-seat";
+        if (type.includes("schedule")) return "badge-schedule";
+        if (type.includes("route")) return "badge-route";
+        return "badge-system";
+      }
+
+      function playNotificationSound() {
+        try {
+          const audioContext = new (window.AudioContext ||
+            window.webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+
+          oscillator.frequency.value = 800;
+          oscillator.type = "sine";
+
+          gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(
+            0.01,
+            audioContext.currentTime + 0.2
+          );
+
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.2);
+        } catch (error) {
+          // Silent fail
+        }
+      }
+
+      // Initialize on page load
+      window.addEventListener("DOMContentLoaded", () => {
+        updateStats();
+        renderNotifications();
+      });
+
+      // Cleanup on page unload
+      window.addEventListener("beforeunload", () => {
+        if (socket) {
+          socket.disconnect();
+        }
+        stopTimer();
+      });
+    </script>
+  </body>
+</html>
