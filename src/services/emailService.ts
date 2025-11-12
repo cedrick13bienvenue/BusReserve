@@ -157,153 +157,75 @@ export class EmailService {
   }
 
   /**
-   * Generate HTML content for booking confirmation email
+   * Generate HTML content for booking confirmation email (MedConnect Theme)
    */
   private static generateBookingConfirmationHTML(data: BookingEmailData): string {
     return `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Booking Confirmation</title>
-      </head>
-      <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
-        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-          <!-- Header -->
-          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px 20px; text-align: center;">
-            <h1 style="margin: 0; font-size: 28px;">🎉 Booking Confirmed!</h1>
-            <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Your seat is reserved</p>
-          </div>
-
-          <!-- Booking Code -->
-          <div style="background-color: #f8f9fa; padding: 20px; text-align: center; border-bottom: 3px solid #667eea;">
-            <p style="margin: 0; color: #6c757d; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Booking Code</p>
-            <h2 style="margin: 10px 0 0 0; color: #2c3e50; font-size: 32px; font-weight: bold; letter-spacing: 2px;">${data.bookingCode}</h2>
-          </div>
-
-          <!-- Passenger Info -->
-          <div style="padding: 30px 20px;">
-            <p style="margin: 0 0 20px 0; font-size: 18px; color: #2c3e50;">Hello <strong>${data.passengerName}</strong>,</p>
-            <p style="margin: 0 0 20px 0; color: #495057; line-height: 1.6;">
-              Thank you for choosing ${config.app.name}! Your booking has been confirmed. Below are your travel details:
-            </p>
-
-            <!-- Journey Details -->
-            <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0;">
-              <h3 style="margin: 0 0 15px 0; color: #667eea; font-size: 18px; border-bottom: 2px solid #667eea; padding-bottom: 10px;">
-                🚌 Journey Details
-              </h3>
-              
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="padding: 10px 0; color: #6c757d; font-size: 14px;">Route:</td>
-                  <td style="padding: 10px 0; color: #2c3e50; font-weight: bold; text-align: right;">
-                    ${data.departureCity} → ${data.arrivalCity}
-                  </td>
-                </tr>
-                <tr style="background-color: #ffffff;">
-                  <td style="padding: 10px 0; color: #6c757d; font-size: 14px;">Travel Date:</td>
-                  <td style="padding: 10px 0; color: #2c3e50; font-weight: bold; text-align: right;">
-                    ${new Date(data.travelDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0; color: #6c757d; font-size: 14px;">Departure Time:</td>
-                  <td style="padding: 10px 0; color: #2c3e50; font-weight: bold; text-align: right;">${data.departureTime}</td>
-                </tr>
-                <tr style="background-color: #ffffff;">
-                  <td style="padding: 10px 0; color: #6c757d; font-size: 14px;">Arrival Time:</td>
-                  <td style="padding: 10px 0; color: #2c3e50; font-weight: bold; text-align: right;">${data.arrivalTime}</td>
-                </tr>
-                ${data.duration ? `
-                <tr>
-                  <td style="padding: 10px 0; color: #6c757d; font-size: 14px;">Duration:</td>
-                  <td style="padding: 10px 0; color: #2c3e50; font-weight: bold; text-align: right;">
-                    ${Math.floor(data.duration / 60)}h ${data.duration % 60}m
-                  </td>
-                </tr>
-                ` : ''}
-              </table>
-            </div>
-
-            <!-- Bus & Seat Details -->
-            <div style="background-color: #e8f5e8; border-radius: 8px; padding: 20px; margin: 20px 0;">
-              <h3 style="margin: 0 0 15px 0; color: #27ae60; font-size: 18px; border-bottom: 2px solid #27ae60; padding-bottom: 10px;">
-                🪑 Bus & Seat Information
-              </h3>
-              
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="padding: 10px 0; color: #6c757d; font-size: 14px;">Bus Company:</td>
-                  <td style="padding: 10px 0; color: #2c3e50; font-weight: bold; text-align: right;">${data.busCompany}</td>
-                </tr>
-                <tr style="background-color: #f0f8f0;">
-                  <td style="padding: 10px 0; color: #6c757d; font-size: 14px;">Plate Number:</td>
-                  <td style="padding: 10px 0; color: #2c3e50; font-weight: bold; text-align: right;">${data.plateNumber}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 10px 0; color: #6c757d; font-size: 14px;">Seat Number:</td>
-                  <td style="padding: 10px 0; color: #2c3e50; font-weight: bold; text-align: right;">
-                    <span style="background-color: #27ae60; color: white; padding: 5px 15px; border-radius: 20px; font-size: 16px;">
-                      Seat ${String(data.seatNumber).padStart(2, '0')}
-                    </span>
-                  </td>
-                </tr>
-              </table>
-            </div>
-
-            <!-- Price -->
-            <div style="background-color: #fff3cd; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #ffc107;">
-              <table style="width: 100%;">
-                <tr>
-                  <td style="color: #856404; font-size: 16px;">Total Fare:</td>
-                  <td style="text-align: right; color: #856404; font-size: 24px; font-weight: bold;">
-                    RWF ${data.price.toLocaleString()}
-                  </td>
-                </tr>
-              </table>
-            </div>
-
-            <!-- Important Instructions -->
-            <div style="background-color: #e7f3ff; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #007bff;">
-              <h3 style="margin: 0 0 15px 0; color: #007bff; font-size: 18px;">
-                📋 Important Instructions
-              </h3>
-              <ul style="margin: 0; padding-left: 20px; color: #495057; line-height: 1.8;">
-                <li>Arrive at the departure point at least <strong>30 minutes before departure</strong></li>
-                <li>Bring a <strong>valid ID</strong> for verification</li>
-                <li>Show your <strong>booking code</strong> (${data.bookingCode}) to the staff</li>
-                <li>Keep this email for your records</li>
-                <li>Contact us immediately if you need to make changes</li>
-              </ul>
-            </div>
-
-            <!-- CTA Button -->
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${config.app.url}/bookings/${data.bookingCode}" 
-                 style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
-                View Booking Details
-              </a>
-            </div>
-          </div>
-
-          <!-- Footer -->
-          <div style="background-color: #2c3e50; color: white; padding: 30px 20px; text-align: center;">
-            <p style="margin: 0 0 10px 0; font-size: 16px;">Need help?</p>
-            <p style="margin: 0 0 20px 0; font-size: 14px; opacity: 0.8;">
-              Contact us at <a href="mailto:${config.email.user}" style="color: #667eea;">${config.email.user}</a>
-            </p>
-            <p style="margin: 0; font-size: 12px; opacity: 0.6;">
-              © ${new Date().getFullYear()} ${config.app.name}. All rights reserved.
-            </p>
-            <p style="margin: 10px 0 0 0; font-size: 12px; opacity: 0.6;">
-              This is an automated message. Please do not reply to this email.
-            </p>
-          </div>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa;">
+        <div style="background-color: #2c3e50; color: white; padding: 20px; text-align: center;">
+          <h1 style="margin: 0;">🚌 ${config.app.name}</h1>
+          <p style="margin: 5px 0 0 0;">Digital Bus Booking System</p>
         </div>
-      </body>
-      </html>
+        
+        <div style="padding: 20px; background-color: white;">
+          <h2 style="color: #2c3e50;">Hello ${data.passengerName},</h2>
+          <p style="color: #000000;">Your booking has been confirmed and is ready for your journey!</p>
+          
+          <div style="background-color: #ecf0f1; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #2c3e50;">Booking Details</h3>
+            <p style="color: #000000;"><strong>Booking Code:</strong> ${data.bookingCode}</p>
+            <p style="color: #000000;"><strong>Company:</strong> ${data.busCompany}</p>
+            <p style="color: #000000;"><strong>Plate Number:</strong> ${data.plateNumber}</p>
+            <p style="color: #000000;"><strong>Travel Date:</strong> ${new Date(data.travelDate).toLocaleDateString()}</p>
+          </div>
+
+          <h3 style="color: #2c3e50;">Journey Details</h3>
+          <table style="width: 100%; border-collapse: collapse; margin: 10px 0;">
+            <thead>
+              <tr style="background-color: #34495e; color: white;">
+                <th style="padding: 10px; text-align: left;">Route</th>
+                <th style="padding: 10px; text-align: left;">Departure</th>
+                <th style="padding: 10px; text-align: left;">Arrival</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; color: #000000;">${data.departureCity} → ${data.arrivalCity}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; color: #000000;">${data.departureTime}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #eee; color: #000000;">${data.arrivalTime}</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; display: inline-block;">
+              <p style="color: #6c757d; margin: 0;"><strong>Seat Number:</strong></p>
+              <h2 style="color: #2c3e50; margin: 10px 0;">${data.seatNumber}</h2>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin: 20px 0;">
+            <div style="background-color: #e8f5e8; padding: 15px; border-radius: 5px; display: inline-block;">
+              <p style="color: #27ae60; margin: 0;"><strong>Total Fare:</strong></p>
+              <h2 style="color: #27ae60; margin: 10px 0;">RWF ${data.price.toLocaleString()}</h2>
+            </div>
+          </div>
+
+          <div style="background-color: #e8f5e8; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h4 style="margin-top: 0; color: #27ae60;">Important Instructions</h4>
+            <ul style="margin: 0; padding-left: 20px; color: #000000;">
+              <li>Arrive at the departure point at least 30 minutes early</li>
+              <li>Bring a valid ID for verification</li>
+              <li>Present your booking code: <strong>${data.bookingCode}</strong></li>
+              <li>Keep this email for your records</li>
+            </ul>
+          </div>
+
+          <p style="color: #7f8c8d; font-size: 12px; text-align: center; margin-top: 30px;">
+            This is an automated message from ${config.app.name}. Please do not reply to this email.
+          </p>
+        </div>
+      </div>
     `;
   }
 
@@ -314,136 +236,70 @@ export class EmailService {
     return `
 ${config.app.name} - BOOKING CONFIRMATION
 
-🎉 Your booking is confirmed!
-
-Booking Code: ${data.bookingCode}
-
 Hello ${data.passengerName},
 
-Thank you for choosing ${config.app.name}! Your booking has been confirmed.
+Your booking has been confirmed!
+
+BOOKING DETAILS:
+- Booking Code: ${data.bookingCode}
+- Company: ${data.busCompany}
+- Plate Number: ${data.plateNumber}
+- Travel Date: ${new Date(data.travelDate).toLocaleDateString()}
 
 JOURNEY DETAILS:
 - Route: ${data.departureCity} → ${data.arrivalCity}
-- Travel Date: ${new Date(data.travelDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-- Departure Time: ${data.departureTime}
-- Arrival Time: ${data.arrivalTime}
-${data.duration ? `- Duration: ${Math.floor(data.duration / 60)}h ${data.duration % 60}m` : ''}
-
-BUS & SEAT INFORMATION:
-- Bus Company: ${data.busCompany}
-- Plate Number: ${data.plateNumber}
-- Seat Number: ${String(data.seatNumber).padStart(2, '0')}
+- Departure: ${data.departureTime}
+- Arrival: ${data.arrivalTime}
+- Seat Number: ${data.seatNumber}
 
 TOTAL FARE: RWF ${data.price.toLocaleString()}
 
 IMPORTANT INSTRUCTIONS:
-✓ Arrive at least 30 minutes before departure
-✓ Bring a valid ID for verification
-✓ Show your booking code (${data.bookingCode}) to the staff
-✓ Keep this email for your records
+- Arrive at least 30 minutes early
+- Bring a valid ID for verification
+- Present your booking code: ${data.bookingCode}
 
-View your booking details: ${config.app.url}/bookings/${data.bookingCode}
-
-Need help? Contact us at ${config.email.user}
-
-© ${new Date().getFullYear()} ${config.app.name}. All rights reserved.
+This is an automated message from ${config.app.name}. Please do not reply to this email.
     `.trim();
   }
 
   /**
-   * Generate HTML content for booking cancellation email
+   * Generate HTML content for booking cancellation email (MedConnect Theme)
    */
   private static generateBookingCancellationHTML(data: BookingCancellationEmailData): string {
     return `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Booking Cancelled</title>
-      </head>
-      <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
-        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-          <!-- Header -->
-          <div style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); color: white; padding: 30px 20px; text-align: center;">
-            <h1 style="margin: 0; font-size: 28px;">Booking Cancelled</h1>
-            <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">We're sorry to see you go</p>
-          </div>
-
-          <!-- Content -->
-          <div style="padding: 30px 20px;">
-            <p style="margin: 0 0 20px 0; font-size: 18px; color: #2c3e50;">Hello <strong>${data.passengerName}</strong>,</p>
-            
-            <p style="margin: 0 0 20px 0; color: #495057; line-height: 1.6;">
-              Your booking has been successfully cancelled as per your request.
-            </p>
-
-            <!-- Booking Details -->
-            <div style="background-color: #f8f9fa; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #e74c3c;">
-              <h3 style="margin: 0 0 15px 0; color: #e74c3c;">Cancelled Booking Details</h3>
-              <table style="width: 100%;">
-                <tr>
-                  <td style="padding: 8px 0; color: #6c757d;">Booking Code:</td>
-                  <td style="padding: 8px 0; color: #2c3e50; font-weight: bold; text-align: right;">${data.bookingCode}</td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #6c757d;">Route:</td>
-                  <td style="padding: 8px 0; color: #2c3e50; font-weight: bold; text-align: right;">
-                    ${data.departureCity} → ${data.arrivalCity}
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0; color: #6c757d;">Travel Date:</td>
-                  <td style="padding: 8px 0; color: #2c3e50; font-weight: bold; text-align: right;">
-                    ${new Date(data.travelDate).toLocaleDateString()}
-                  </td>
-                </tr>
-                ${data.refundAmount ? `
-                <tr>
-                  <td style="padding: 8px 0; color: #6c757d;">Refund Amount:</td>
-                  <td style="padding: 8px 0; color: #27ae60; font-weight: bold; text-align: right;">
-                    RWF ${data.refundAmount.toLocaleString()}
-                  </td>
-                </tr>
-                ` : ''}
-              </table>
-            </div>
-
-            ${data.refundAmount ? `
-            <div style="background-color: #d4edda; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #28a745;">
-              <p style="margin: 0; color: #155724; line-height: 1.6;">
-                <strong>💰 Refund Processing:</strong><br>
-                Your refund of RWF ${data.refundAmount.toLocaleString()} will be processed within 5-7 business days.
-              </p>
-            </div>
-            ` : ''}
-
-            <p style="margin: 20px 0; color: #495057; line-height: 1.6;">
-              We hope to serve you again in the future. If you have any questions, please don't hesitate to contact us.
-            </p>
-
-            <!-- CTA Button -->
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${config.app.url}" 
-                 style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 16px;">
-                Book Another Trip
-              </a>
-            </div>
-          </div>
-
-          <!-- Footer -->
-          <div style="background-color: #2c3e50; color: white; padding: 30px 20px; text-align: center;">
-            <p style="margin: 0 0 10px 0; font-size: 16px;">Need help?</p>
-            <p style="margin: 0 0 20px 0; font-size: 14px; opacity: 0.8;">
-              Contact us at <a href="mailto:${config.email.user}" style="color: #667eea;">${config.email.user}</a>
-            </p>
-            <p style="margin: 0; font-size: 12px; opacity: 0.6;">
-              © ${new Date().getFullYear()} ${config.app.name}. All rights reserved.
-            </p>
-          </div>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa;">
+        <div style="background-color: #c0392b; color: white; padding: 20px; text-align: center;">
+          <h1 style="margin: 0;">❌ Booking Cancelled</h1>
+          <p style="margin: 5px 0 0 0;">Cancellation Confirmation</p>
         </div>
-      </body>
-      </html>
+        
+        <div style="padding: 20px; background-color: white;">
+          <h2 style="color: #2c3e50;">Hello ${data.passengerName},</h2>
+          <p style="color: #000000;">Your booking has been successfully cancelled as per your request.</p>
+          
+          <div style="background-color: #f8d7da; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #e74c3c;">
+            <h3 style="margin-top: 0; color: #c0392b;">Cancelled Booking Details</h3>
+            <p style="color: #000000;"><strong>Booking Code:</strong> ${data.bookingCode}</p>
+            <p style="color: #000000;"><strong>Route:</strong> ${data.departureCity} → ${data.arrivalCity}</p>
+            <p style="color: #000000;"><strong>Travel Date:</strong> ${new Date(data.travelDate).toLocaleDateString()}</p>
+            ${data.refundAmount ? `<p style="color: #000000;"><strong>Refund Amount:</strong> RWF ${data.refundAmount.toLocaleString()}</p>` : ''}
+          </div>
+
+          ${data.refundAmount ? `
+          <div style="background-color: #d4edda; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #28a745;">
+            <h4 style="margin-top: 0; color: #155724;">Refund Information</h4>
+            <p style="margin: 0; color: #155724;">
+              Your refund of RWF ${data.refundAmount.toLocaleString()} will be processed within 5-7 business days.
+            </p>
+          </div>
+          ` : ''}
+
+          <p style="color: #7f8c8d; font-size: 12px; text-align: center; margin-top: 30px;">
+            This is an automated message from ${config.app.name}. Please do not reply to this email.
+          </p>
+        </div>
+      </div>
     `;
   }
 
@@ -456,7 +312,7 @@ ${config.app.name} - BOOKING CANCELLED
 
 Hello ${data.passengerName},
 
-Your booking has been successfully cancelled as per your request.
+Your booking has been successfully cancelled.
 
 CANCELLED BOOKING DETAILS:
 - Booking Code: ${data.bookingCode}
@@ -464,138 +320,53 @@ CANCELLED BOOKING DETAILS:
 - Travel Date: ${new Date(data.travelDate).toLocaleDateString()}
 ${data.refundAmount ? `- Refund Amount: RWF ${data.refundAmount.toLocaleString()}` : ''}
 
-${data.refundAmount ? `\nREFUND PROCESSING:\nYour refund of RWF ${data.refundAmount.toLocaleString()} will be processed within 5-7 business days.\n` : ''}
+${data.refundAmount ? `\nREFUND PROCESSING:\nYour refund will be processed within 5-7 business days.\n` : ''}
 
-We hope to serve you again in the future.
-
-Book another trip: ${config.app.url}
-
-Need help? Contact us at ${config.email.user}
-
-© ${new Date().getFullYear()} ${config.app.name}. All rights reserved.
+This is an automated message from ${config.app.name}. Please do not reply to this email.
     `.trim();
   }
 
   /**
-   * Generate HTML content for booking reminder email
+   * Generate HTML content for booking reminder email (MedConnect Theme)
    */
   private static generateBookingReminderHTML(data: BookingReminderEmailData): string {
     return `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Travel Reminder</title>
-      </head>
-      <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
-        <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
-          <!-- Header -->
-          <div style="background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%); color: white; padding: 30px 20px; text-align: center;">
-            <h1 style="margin: 0; font-size: 28px;">⏰ Travel Reminder</h1>
-            <p style="margin: 10px 0 0 0; font-size: 18px; font-weight: bold;">
-              Your trip is in ${data.hoursUntilDeparture} hours!
-            </p>
-          </div>
-
-          <!-- Content -->
-          <div style="padding: 30px 20px;">
-            <p style="margin: 0 0 20px 0; font-size: 18px; color: #2c3e50;">Hello <strong>${data.passengerName}</strong>,</p>
-            
-            <p style="margin: 0 0 20px 0; color: #495057; line-height: 1.6; font-size: 16px;">
-              This is a friendly reminder that your bus departs in <strong style="color: #e67e22;">${data.hoursUntilDeparture} hours</strong>. 
-              Please make sure you're ready for your journey!
-            </p>
-
-            <!-- Trip Details -->
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; padding: 20px; margin: 20px 0; color: white;">
-              <h3 style="margin: 0 0 15px 0; font-size: 20px; text-align: center;">Your Trip Details</h3>
-              
-              <div style="background-color: rgba(255, 255, 255, 0.1); border-radius: 5px; padding: 15px; margin: 10px 0;">
-                <table style="width: 100%; color: white;">
-                  <tr>
-                    <td style="padding: 8px 0; font-size: 14px; opacity: 0.9;">Route:</td>
-                    <td style="padding: 8px 0; font-weight: bold; text-align: right; font-size: 16px;">
-                      ${data.departureCity} → ${data.arrivalCity}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0; font-size: 14px; opacity: 0.9;">Date:</td>
-                    <td style="padding: 8px 0; font-weight: bold; text-align: right; font-size: 16px;">
-                      ${new Date(data.travelDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0; font-size: 14px; opacity: 0.9;">Departure:</td>
-                    <td style="padding: 8px 0; font-weight: bold; text-align: right; font-size: 20px; color: #ffc107;">
-                      ${data.departureTime}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 8px 0; font-size: 14px; opacity: 0.9;">Seat:</td>
-                    <td style="padding: 8px 0; text-align: right;">
-                      <span style="background-color: white; color: #667eea; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 16px;">
-                        ${String(data.seatNumber).padStart(2, '0')}
-                      </span>
-                    </td>
-                  </tr>
-                </table>
-              </div>
-
-              <div style="text-align: center; margin-top: 15px; padding: 15px; background-color: rgba(255, 255, 255, 0.1); border-radius: 5px;">
-                <p style="margin: 0; font-size: 14px; opacity: 0.9;">Booking Code</p>
-                <p style="margin: 5px 0 0 0; font-size: 24px; font-weight: bold; letter-spacing: 2px;">
-                  ${data.bookingCode}
-                </p>
-              </div>
-            </div>
-
-            <!-- Checklist -->
-            <div style="background-color: #fff3cd; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #ffc107;">
-              <h3 style="margin: 0 0 15px 0; color: #856404;">✅ Pre-Departure Checklist</h3>
-              <ul style="margin: 0; padding-left: 20px; color: #856404; line-height: 2;">
-                <li><strong>Arrive 30 minutes early</strong> at the departure point</li>
-                <li>Bring your <strong>valid ID</strong></li>
-                <li>Have your <strong>booking code ready</strong></li>
-                <li>Check the weather and dress accordingly</li>
-                <li>Pack light refreshments for the journey</li>
-              </ul>
-            </div>
-
-            <!-- Bus Info -->
-            <div style="background-color: #e8f5e8; border-radius: 8px; padding: 20px; margin: 20px 0;">
-              <p style="margin: 0; color: #27ae60; font-weight: bold;">🚌 Bus Information</p>
-              <p style="margin: 10px 0 0 0; color: #2c3e50;">
-                <strong>${data.busCompany}</strong> - Plate: <strong>${data.plateNumber}</strong>
-              </p>
-            </div>
-
-            <!-- CTA Button -->
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${config.app.url}/bookings/${data.bookingCode}" 
-                 style="display: inline-block; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 25px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);">
-                View Booking Details
-              </a>
-            </div>
-
-            <p style="margin: 20px 0; color: #495057; text-align: center; line-height: 1.6;">
-              Have a safe and pleasant journey! 🚌✨
-            </p>
-          </div>
-
-          <!-- Footer -->
-          <div style="background-color: #2c3e50; color: white; padding: 30px 20px; text-align: center;">
-            <p style="margin: 0 0 10px 0; font-size: 16px;">Need help?</p>
-            <p style="margin: 0 0 20px 0; font-size: 14px; opacity: 0.8;">
-              Contact us at <a href="mailto:${config.email.user}" style="color: #667eea;">${config.email.user}</a>
-            </p>
-            <p style="margin: 0; font-size: 12px; opacity: 0.6;">
-              © ${new Date().getFullYear()} ${config.app.name}. All rights reserved.
-            </p>
-          </div>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa;">
+        <div style="background-color: #f39c12; color: white; padding: 20px; text-align: center;">
+          <h1 style="margin: 0;">⏰ Travel Reminder</h1>
+          <p style="margin: 5px 0 0 0;">Your trip is in ${data.hoursUntilDeparture} hours!</p>
         </div>
-      </body>
-      </html>
+        
+        <div style="padding: 20px; background-color: white;">
+          <h2 style="color: #2c3e50;">Hello ${data.passengerName},</h2>
+          <p style="color: #000000;">This is a friendly reminder that your bus departs in <strong>${data.hoursUntilDeparture} hours</strong>.</p>
+          
+          <div style="background-color: #ecf0f1; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3 style="margin-top: 0; color: #2c3e50;">Trip Details</h3>
+            <p style="color: #000000;"><strong>Booking Code:</strong> ${data.bookingCode}</p>
+            <p style="color: #000000;"><strong>Route:</strong> ${data.departureCity} → ${data.arrivalCity}</p>
+            <p style="color: #000000;"><strong>Date:</strong> ${new Date(data.travelDate).toLocaleDateString()}</p>
+            <p style="color: #000000;"><strong>Departure:</strong> ${data.departureTime}</p>
+            <p style="color: #000000;"><strong>Company:</strong> ${data.busCompany}</p>
+            <p style="color: #000000;"><strong>Plate:</strong> ${data.plateNumber}</p>
+            <p style="color: #000000;"><strong>Seat:</strong> ${data.seatNumber}</p>
+          </div>
+
+          <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #ffc107;">
+            <h4 style="margin-top: 0; color: #856404;">Pre-Departure Checklist</h4>
+            <ul style="margin: 0; padding-left: 20px; color: #856404;">
+              <li>Arrive 30 minutes early</li>
+              <li>Bring your valid ID</li>
+              <li>Have your booking code ready</li>
+              <li>Check the weather forecast</li>
+            </ul>
+          </div>
+
+          <p style="color: #7f8c8d; font-size: 12px; text-align: center; margin-top: 30px;">
+            This is an automated message from ${config.app.name}. Please do not reply to this email.
+          </p>
+        </div>
+      </div>
     `;
   }
 
@@ -610,33 +381,24 @@ ${config.app.name} - TRAVEL REMINDER
 
 Hello ${data.passengerName},
 
-This is a friendly reminder that your bus departs in ${data.hoursUntilDeparture} hours.
-
-YOUR TRIP DETAILS:
-- Route: ${data.departureCity} → ${data.arrivalCity}
-- Date: ${new Date(data.travelDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-- Departure Time: ${data.departureTime}
-- Seat Number: ${String(data.seatNumber).padStart(2, '0')}
+TRIP DETAILS:
 - Booking Code: ${data.bookingCode}
-
-BUS INFORMATION:
+- Route: ${data.departureCity} → ${data.arrivalCity}
+- Date: ${new Date(data.travelDate).toLocaleDateString()}
+- Departure: ${data.departureTime}
 - Company: ${data.busCompany}
-- Plate Number: ${data.plateNumber}
+- Plate: ${data.plateNumber}
+- Seat: ${data.seatNumber}
 
 PRE-DEPARTURE CHECKLIST:
-✓ Arrive 30 minutes early at the departure point
+✓ Arrive 30 minutes early
 ✓ Bring your valid ID
 ✓ Have your booking code ready
-✓ Check the weather and dress accordingly
-✓ Pack light refreshments for the journey
+✓ Check the weather forecast
 
-View your booking: ${config.app.url}/bookings/${data.bookingCode}
+Have a safe journey!
 
-Have a safe and pleasant journey!
-
-Need help? Contact us at ${config.email.user}
-
-© ${new Date().getFullYear()} ${config.app.name}. All rights reserved.
+This is an automated message from ${config.app.name}. Please do not reply to this email.
     `.trim();
   }
 }
