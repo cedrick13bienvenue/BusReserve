@@ -1,5 +1,7 @@
 import { Model, DataTypes, Optional } from 'sequelize';
 import sequelize from '../config/database';
+import BusSchedule from './BusSchedule'; // Import the related model
+import User from './User'; // Import the related model
 
 interface BookingAttributes {
   id: number;
@@ -25,6 +27,10 @@ class Booking extends Model<BookingAttributes, BookingCreationAttributes> implem
   public status!: 'confirmed' | 'cancelled' | 'completed';
   public readonly created_at!: Date;
   public readonly updated_at!: Date;
+
+  // Associated data (optional, populated when using include)
+  public readonly user?: User;
+  public readonly schedule?: BusSchedule;
 }
 
 Booking.init(
@@ -35,7 +41,7 @@ Booking.init(
       primaryKey: true,
     },
     booking_code: {
-      type: DataTypes.STRING(25), // Changed from 20 to 25
+      type: DataTypes.STRING(25),
       allowNull: false,
       unique: true,
     },
