@@ -15,6 +15,13 @@ export const BOOKING_STATUS = {
   COMPLETED: 'completed',
 } as const;
 
+// Booking types
+export const BOOKING_TYPES = {
+  ONE_WAY: 'one-way',
+  ROUND_TRIP: 'round-trip',
+  MULTI_CITY: 'multi-city',
+} as const;
+
 // Bus status
 export const BUS_STATUS = {
   ACTIVE: 'active',
@@ -53,6 +60,12 @@ export const VALIDATION_CONSTANTS = {
   MIN_DISTANCE: 0,
   MAX_DISTANCE: 10000,
   PHONE_LENGTH: 13, // +250788123456
+} as const;
+
+// Multi-city constraints
+export const MULTI_CITY_CONSTRAINTS = {
+  MIN_LEGS: 2,
+  MAX_LEGS: 5,
 } as const;
 
 // Rwandan cities (major destinations)
@@ -126,6 +139,10 @@ export const ERROR_MESSAGES = {
   INVALID_TRAVEL_DATE: 'Invalid travel date',
   PAST_DATE: 'Travel date cannot be in the past',
   BOOKING_ALREADY_CANCELLED: 'Booking is already cancelled',
+  RETURN_DATE_INVALID: 'Return date must be after departure date',
+  MULTI_CITY_LEG_COUNT: 'Multi-city booking requires 2-5 legs',
+  CHRONOLOGICAL_ORDER: 'Travel dates must be in chronological order',
+  COMPLEX_BOOKING_NOT_FOUND: 'Complex booking not found or already cancelled',
 
   // Route errors
   ROUTE_NOT_FOUND: 'Route not found',
@@ -155,6 +172,9 @@ export const SUCCESS_MESSAGES = {
   BOOKING_CREATED: 'Booking created successfully',
   BOOKING_CANCELLED: 'Booking cancelled successfully',
   BOOKING_STATUS_UPDATED: 'Booking status updated successfully',
+  ROUND_TRIP_CREATED: 'Round-trip booking created successfully',
+  MULTI_CITY_CREATED: 'Multi-city booking created successfully',
+  COMPLEX_BOOKING_CANCELLED: 'All legs of your booking have been cancelled successfully',
 
   // Route
   ROUTE_CREATED: 'Route created successfully',
@@ -202,6 +222,10 @@ export const API_ROUTES = {
     BY_CODE: '/api/bookings/code/:code',
     BY_ID: '/api/bookings/:id',
     UPDATE_STATUS: '/api/bookings/:id/status',
+    ROUND_TRIP: '/api/bookings/round-trip',
+    MULTI_CITY: '/api/bookings/multi-city',
+    COMPLETE: '/api/bookings/complete/:code',
+    CANCEL_COMPLEX: '/api/bookings/complex/:code',
   },
 } as const;
 
