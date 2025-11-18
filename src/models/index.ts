@@ -1,4 +1,4 @@
- import User from './User';
+import User from './User';
 import BusCompany from './BusCompany';
 import Bus from './Bus';
 import Route from './Route';
@@ -56,6 +56,16 @@ BusSchedule.hasMany(Booking, {
 Booking.belongsTo(BusSchedule, {
   foreignKey: 'schedule_id',
   as: 'schedule',
+});
+
+// Booking self-referential associations (for round-trip and multi-city)
+Booking.hasMany(Booking, {
+  foreignKey: 'parent_booking_id',
+  as: 'childBookings',
+});
+Booking.belongsTo(Booking, {
+  foreignKey: 'parent_booking_id',
+  as: 'parentBooking',
 });
 
 // User -> TokenBlacklist (One-to-Many)
