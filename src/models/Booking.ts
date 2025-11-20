@@ -56,7 +56,7 @@ Booking.init(
       primaryKey: true,
     },
     booking_code: {
-      type: DataTypes.STRING(25),
+      type: DataTypes.STRING(30), // Changed from 25 to 30
       allowNull: false,
       unique: true,
     },
